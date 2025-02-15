@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StoryMosaic - Collaborative Storytelling</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js"></script>
+</head>
+
+<body class="bg-gray-100">
+    <div class="container mx-auto p-6">
+        <header class="bg-blue-600 text-white p-4 rounded-lg shadow-lg text-center">
+            <h1 class="text-3xl font-bold">StoryMosaic - Collaborative Storytelling</h1>
+        </header>
+
+        <div class="mt-6 bg-white p-6 rounded-lg shadow-lg">
+            <div class="flex justify-between mb-4">
+                <h2 class="text-xl font-semibold">Live Collaborative Writing</h2>
+                <select id="userRole" class="border p-2 rounded">
+                    <option value="author">Author</option>
+                    <option value="editor">Editor</option>
+                    <option value="reader">Reader</option>
+                </select>
+            </div>
+            <textarea id="storyEditor" class="w-full h-64 border p-4 rounded-lg"
+                placeholder="Start writing your story..."></textarea>
+        </div>
+
+        <div class="mt-6 bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4">Comments & Feedback</h2>
+            <input type="text" id="commentInput" class="border p-2 w-full rounded" placeholder="Write a comment...">
+            <button onclick="addComment()" class="bg-blue-600 text-white px-4 py-2 mt-2 rounded">Submit</button>
+            <ul id="commentList" class="mt-4 space-y-2"></ul>
+        </div>
+    </div>
+
+    <script>
+        const socket = io('http://localhost:3000');
+
+        const storyEditor = document.getElementById('storyEditor');
+        storyEditor.addEventListener('input', () => {
+            socket.emit('textUpdate', storyEditor.value);
+        });
+
+        socket.on('textUpdate', (data) => {
+            storyEditor.value = data;
+        });
+
+        function addComment() {
+            let commentText = document.getElementById('commentInput').value;
+            if (commentText.trim() !== "") {
+                let commentList = document.getElementById('commentList');
+                let newComment = document.createElement('li');
+                newComment.className = "p-2 border rounded bg-gray-100";
+                newComment.textContent = commentText;
+                commentList.appendChild(newComment);
+                document.getElementById('commentInput').value = "";
+                socket.emit('newComment', commentText);
+            }
+        }
+
+        socket.on('newComment', (commentText) => {
+            let commentList = document.getElementById('commentList');
+            let newComment = document.createElement('li');
+            newComment.className = "p-2 border rounded bg-gray-100";
+            newComment.textContent = commentText;
+            commentList.appendChild(newComment);
+        });
+    </script>
+</body>
+
+</html>
